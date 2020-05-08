@@ -126,6 +126,10 @@ while videoCapture.isOpened():
         y = int(y / area)
         cv.putText(frame, color, (x, y), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
         centre = (x, y)
+
+        gray = cv.cvtColor(mask, cv.COLOR_BGR2GRAY)
+        gray = cv.GaussianBlur(gray, (5, 5), 0)
+
         print("Centre : " + str(centre) + ", farthest Point : ")
         cv.circle(frame, centre, 5, [255, 0, 255], -1)
         if isRealesed:
