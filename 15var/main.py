@@ -11,12 +11,12 @@ args = vars(ap.parse_args())
 
 videoCapture = cv.VideoCapture(1)
 videoMe = cv.VideoCapture(0)
-planeList = cv.imread("s1200.jpg", 1)
+planeList = cv.imread("123.jpg", 1)
 
 lower_red = np.array([0, 85, 110], dtype = "uint8")
-upper_red = np.array([8, 255, 255], dtype = "uint8")
+upper_red = np.array([15, 255, 255], dtype = "uint8")
 
-lower_violet_red = np.array([172, 85, 110], dtype = "uint8")
+lower_violet_red = np.array([165, 85, 110], dtype = "uint8")
 upper_violet_red = np.array([180, 255, 255], dtype = "uint8")
 
 lower_yellow = np.array([20, 85, 110], dtype = "uint8")
@@ -126,14 +126,18 @@ while videoCapture.isOpened():
         y = int(y / area)
         cv.putText(frame, color, (x, y), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
         centre = (x, y)
-
-        gray = cv.cvtColor(mask, cv.COLOR_BGR2GRAY)
-        gray = cv.GaussianBlur(gray, (5, 5), 0)
-
-        print("Centre : " + str(centre) + ", farthest Point : ")
-        cv.circle(frame, centre, 5, [255, 0, 255], -1)
+        cnts = cv.findContours(mask, cv.RETR_EXTERNAL,
+                                cv.CHAIN_APPROX_SIMPLE)
+        cnts = imutils.grab_contours(cnts)
+        c = max(cnts, key=cv.contourArea)
+        extBot = tuple(c[c[:, :, 1].argmax()][0])
+        print("Centre : " + str(centre) + ", farthest Point : " + str(extBot))
+        cv.circle(frame, extBot, 5, [255, 0, 255], -1)
+        lst = list(extBot)
+        lst[1] = 450 - lst[1]
+        extBot = tuple(lst)
         if isRealesed:
-            pts.appendleft(centre)
+            pts.appendleft(extBot)
 
             for i in range(1, len(pts)):
                 if pts[i - 1] is None or pts[i] is None:
@@ -156,12 +160,8 @@ while videoCapture.isOpened():
         isRealesed = not isRealesed
         pts.clear()
     elif pressedKey & 0xFF == ord('c'):
-        planeList = cv.imread("s1200.jpg", 1)
+        planeList = cv.imread("123.jpg", 1)
         pts.clear()
 
 cv.destroyAllWindows()
 videoCapture.release()
-
-
-
-
