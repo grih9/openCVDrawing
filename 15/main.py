@@ -1,5 +1,5 @@
 import argparse
-
+import imutils
 import cv2 as cv
 import numpy as np
 from collections import deque
@@ -37,7 +37,6 @@ upper_blue = np.array([115, 255, 255], dtype = "uint8")
 lower_green = np.array([30, 85, 110], dtype = "uint8")
 upper_green = np.array([80, 255, 255], dtype = "uint8")
 
-
 color = ""
 x = 0.0
 y = 0.0
@@ -45,13 +44,11 @@ area = 0
 isRealesed = False
 mask = None
 pts = deque(maxlen=args["buffer"])
-maxCont = None
 
 while videoCapture.isOpened():
     ret, frame = videoCapture.read()
     ret2, me = videoMe.read()
     frame = cv.flip(frame, 1)
-
 
     hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
     red_tmp = cv.inRange(hsv, lower_red, upper_red)
@@ -69,68 +66,48 @@ while videoCapture.isOpened():
     tmpx = 0.0
     tmpy = 0.0
     maxArea = 0
-    tmpMaxCont = None
 
     for k in range(1):
-        contourList, _ = cv.findContours(yellow, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-        tmpCont = max(contourList, key=cv.contourArea)
-
-        #moments = cv.moments(yellow, 1)
-        #x_moment = moments['m10']
-        #y_moment = moments['m01']
-        x_moment = maxCont['m10']
-        y_moment = maxCont['m01']
-        #tmpArea = moments['m00']
-        tmpArea = maxCont['m00']
+        moments = cv.moments(yellow, 1)
+        x_moment = moments['m10']
+        y_moment = moments['m01']
+        tmpArea = moments['m00']
         if color == "yellow":
             if tmpArea != 0:
                 x = x_moment
                 y = y_moment
                 area = tmpArea
                 mask = yellow
-                maxCont = tmpCont
                 break
             else:
                 color = ""
-                maxCont = None
                 mask = None
                 area = 0
         elif tmpArea != 0 and tmpArea > maxArea:
             tmpMask = yellow
-            tmpMaxCont = tmpCont
             maxArea = tmpArea
             tmpColor = "yellow"
             tmpx = x_moment
             tmpy = y_moment
 
-
     for k in range(1):
-        contourList, _ = cv.findContours(red, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-        tmpCont = max(contourList, key=cv.contourArea)
-
-        # moments = cv.moments(yellow, 1)
-        # x_moment = moments['m10']
-        # y_moment = moments['m01']
-        x_moment = maxCont['m10']
-        y_moment = maxCont['m01']
-        # tmpArea = moments['m00']
-        tmpArea = maxCont['m00']
+        moments = cv.moments(red, 1)
+        x_moment = moments['m10']
+        y_moment = moments['m01']
+        tmpArea = moments['m00']
         if color == "red":
             if tmpArea != 0:
                 x = x_moment
                 y = y_moment
                 area = tmpArea
                 mask = red
-                maxCont = tmpCont
                 break
             else:
                 color = ""
-                maxCont = None
                 mask = None
                 area = 0
         elif tmpArea != 0 and tmpArea > maxArea:
             tmpMask = red
-            tmpMaxCont = tmpCont
             maxArea = tmpArea
             tmpColor = "red"
             tmpx = x_moment
@@ -141,35 +118,27 @@ while videoCapture.isOpened():
         color = tmpColor
         mask = tmpMask
         area = maxArea
-        maxCont = tmpMaxCont
         x = tmpx
         y = tmpy
-
 
     if (area > 100) :
         x = int(x / area)
         y = int(y / area)
         cv.putText(frame, color, (x, y), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
         centre = (x, y)
+        print("Centre : " + str(centre) + ", farthest Point : ")
+        cv.circle(frame, centre, 5, [255, 0, 255], -1)
+        if isRealesed:
+            pts.appendleft(centre)
 
-        if maxCont is not None:
-            hull = cv.convexHull(maxCont, returnPoints=False)
-            defects = cv.convexityDefects(maxCont, hull)
-            farpoint = farthest_point(defects, maxCont, centre)
-            print("Centre : " + str(centre) + ", farthest Point : " + str(far_point))
-            cv.circle(frame, centre, 5, [255, 0, 255], -1)
+            for i in range(1, len(pts)):
+                if pts[i - 1] is None or pts[i] is None:
+                    continue
 
-            if isRealesed:
-                pts.appendleft(farPoint)
-
-                for i in range(1, len(pts)):
-                    if pts[i - 1] is None or pts[i] is None:
-                        continue
-
-                    colorDraw = (0, 0, 255)
-                    if color == "yellow":
-                        colorDraw = (0, 255, 255)
-                    cv.line(planeList, pts[i - 1], pts[i], colorDraw)
+                colorDraw = (0, 0, 255)
+                if color == "yellow":
+                    colorDraw = (0, 255, 255)
+                cv.line(planeList, pts[i - 1], pts[i], colorDraw)
 
     cv.imshow("frame", frame)
     cv.imshow('yellowmask', yellow)
