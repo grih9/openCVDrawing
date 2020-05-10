@@ -9,17 +9,17 @@ ap.add_argument("-b", "--buffer", type=int, default=2,
 	help="max buffer size")
 args = vars(ap.parse_args())
 
-videoCapture = cv.VideoCapture(1)
-videoMe = cv.VideoCapture(0)
+videoCapture = cv.VideoCapture(0)
+videoMe = cv.VideoCapture(1)
 planeList = cv.imread("123.jpg", 1)
 
-lower_red = np.array([0, 85, 110], dtype = "uint8")
+lower_red = np.array([0, 109, 20], dtype = "uint8")
 upper_red = np.array([15, 255, 255], dtype = "uint8")
 
-lower_violet_red = np.array([165, 85, 110], dtype = "uint8")
+lower_violet_red = np.array([165, 109, 20], dtype = "uint8")
 upper_violet_red = np.array([180, 255, 255], dtype = "uint8")
 
-lower_yellow = np.array([20, 85, 110], dtype = "uint8")
+lower_yellow = np.array([20, 109, 20], dtype = "uint8")
 upper_yellow = np.array([40, 255, 255], dtype = "uint8")
 
 lower_orange = np.array([12, 85, 110], dtype = "uint8")
@@ -70,7 +70,7 @@ while videoCapture.isOpened():
         y_moment = moments['m01']
         tmpArea = moments['m00']
         if color == "yellow":
-            if tmpArea > 1000:
+            if tmpArea > 750:
                 x = x_moment
                 y = y_moment
                 area = tmpArea
@@ -80,7 +80,7 @@ while videoCapture.isOpened():
                 color = ""
                 mask = None
                 area = 0
-        elif tmpArea > 1000 and tmpArea > maxArea:
+        elif tmpArea > 750 and tmpArea > maxArea:
             tmpMask = yellow
             maxArea = tmpArea
             tmpColor = "yellow"
@@ -92,7 +92,7 @@ while videoCapture.isOpened():
         y_moment = moments['m01']
         tmpArea = moments['m00']
         if color == "red":
-            if tmpArea > 1000:
+            if tmpArea > 750:
                 x = x_moment
                 y = y_moment
                 area = tmpArea
@@ -102,7 +102,7 @@ while videoCapture.isOpened():
                 color = ""
                 mask = None
                 area = 0
-        elif tmpArea > 1000 and tmpArea > maxArea:
+        elif tmpArea > 750 and tmpArea > maxArea:
             tmpMask = red
             maxArea = tmpArea
             tmpColor = "red"
@@ -114,7 +114,7 @@ while videoCapture.isOpened():
         y_moment = moments['m01']
         tmpArea = moments['m00']
         if color == "blue":
-            if tmpArea > 1000:
+            if tmpArea > 750:
                 x = x_moment
                 y = y_moment
                 area = tmpArea
@@ -124,7 +124,7 @@ while videoCapture.isOpened():
                 color = ""
                 mask = None
                 area = 0
-        elif tmpArea > 1000 and tmpArea > maxArea:
+        elif tmpArea > 750 and tmpArea > maxArea:
             tmpMask = blue
             maxArea = tmpArea
             tmpColor = "blue"
@@ -138,7 +138,7 @@ while videoCapture.isOpened():
         x = tmpx
         y = tmpy
 
-    if (area > 1000) :
+    if (area > 750) :
         x = int(x / area)
         y = int(y / area)
         if isRealesed:
@@ -158,10 +158,13 @@ while videoCapture.isOpened():
             pts.appendleft(extTop)
 
             for i in range(1, len(pts)):
-                d = list(extTop)
-                tmp = list(pts[0])
-                if ((tmp[0] - d[0])**2 + (tmp[1] - d[1])**2)**(1/2) > 50:
+                d = list(pts[i - 1])
+                tmp = list(pts[i])
+                dist = (tmp[0] - d[0]) * (tmp[0] - d[0]) + (tmp[1] - d[1]) * (tmp[1] - d[1])
+                print(dist)
+                if dist > 3600:
                     pts.popleft()
+                    isRealesed = False
                     continue
                 if pts[i - 1] is None or pts[i] is None:
                     continue
@@ -177,10 +180,10 @@ while videoCapture.isOpened():
     redScreen = cv.bitwise_and(frame, frame, mask = red)
     yellowScreen = cv.bitwise_and(frame, frame, mask = yellow)
     cv.imshow("frame", frame)
-    cv.imshow('yellowmask', yellowScreen)
-    cv.imshow('redmask', redScreen)
-    cv.imshow('draw', planeList)
+    yellowRed = np.hstack([yellowScreen, redScreen])
+    cv.imshow('yellow and red', yellowRed)
     cv.imshow('blue', blueScreen)
+    cv.imshow('draw', planeList)
     #cv.imshow('me', me)
 
     pressedKey = cv.waitKey(1)
