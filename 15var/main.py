@@ -1,13 +1,7 @@
-import argparse
 import imutils
 import cv2 as cv
 import numpy as np
 from collections import deque
-
-ap = argparse.ArgumentParser()
-ap.add_argument("-b", "--buffer", type=int, default=2,
-	help="max buffer size")
-args = vars(ap.parse_args())
 
 videoCapture = cv.VideoCapture(0)
 videoMe = cv.VideoCapture(1)
@@ -42,8 +36,9 @@ x = 0.0
 y = 0.0
 area = 0
 isRealesed = False
+isEraser = False
 mask = None
-pts = deque(maxlen=args["buffer"])
+pts = deque(maxlen = 2)
 
 while videoCapture.isOpened():
     ret, frame = videoCapture.read()
@@ -142,17 +137,19 @@ while videoCapture.isOpened():
         x = int(x / area)
         y = int(y / area)
         if isRealesed:
-            cv.putText(frame, color, (x, y), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+            if isEraser:
+                cv.putText(frame, color, (x, y), cv.FONT_HERSHEY_SIMPLEX, 1, (200, 200, 41), 2)
+            else:
+                cv.putText(frame, color, (x, y), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
         else:
             cv.putText(frame, color, (x, y), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
         centre = (x, y)
-        cnts = cv.findContours(mask, cv.RETR_EXTERNAL,
-                                cv.CHAIN_APPROX_SIMPLE)
+        cnts = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
         c = max(cnts, key=cv.contourArea)
         extTop = tuple(c[c[:, :, 1].argmin()][0])
         print("Centre : " + str(centre) + ", top point : " + str(extTop))
-        cv.circle(frame, extTop, 5, [255, 0, 255], -1)
+        cv.circle(frame, extTop, 4, [255, 0, 255], -1)
 
         if isRealesed:
             pts.appendleft(extTop)
@@ -161,20 +158,24 @@ while videoCapture.isOpened():
                 d = list(pts[i - 1])
                 tmp = list(pts[i])
                 dist = (tmp[0] - d[0]) * (tmp[0] - d[0]) + (tmp[1] - d[1]) * (tmp[1] - d[1])
-                print(dist)
-                if dist > 3600:
+                print("Distanation : " + str(dist))
+                if dist > 4900:
                     pts.popleft()
                     isRealesed = False
-                    continue
-                if pts[i - 1] is None or pts[i] is None:
+                    isEraser = False
+                    pts.clear()
                     continue
 
                 colorDraw = (0, 0, 255)
-                if color == "yellow":
-                    colorDraw = (0, 255, 255)
-                elif color == "blue":
-                    colorDraw = (255, 0, 0)
-                cv.line(planeList, pts[i - 1], pts[i], colorDraw)
+                thickness = 2
+                if isEraser:
+                    cv.circle(planeList, pts[i], 10, [255, 255, 255], -1)
+                else:
+                    if color == "yellow":
+                        colorDraw = (0, 255, 255)
+                    elif color == "blue":
+                        colorDraw = (255, 0, 0)
+                    cv.line(planeList, pts[i - 1], pts[i], colorDraw, thickness = thickness)
 
     blueScreen = cv.bitwise_and(frame, frame, mask = blue)
     redScreen = cv.bitwise_and(frame, frame, mask = red)
@@ -190,11 +191,23 @@ while videoCapture.isOpened():
     if pressedKey & 0xFF == ord('z'):
         break
     elif pressedKey & 0xFF == ord('r'):
-        isRealesed = not isRealesed
+        if isEraser:
+            isRealesed = True
+        else:
+            isRealesed = not isRealesed
+        isEraser = False
         pts.clear()
     elif pressedKey & 0xFF == ord('c'):
+        isRealesed = False
+        isEraser = False
         planeList = cv.imread("123.jpg", 1)
         pts.clear()
+    elif pressedKey & 0xFF == ord('d'):
+        isEraser = not isEraser
+        isRealesed = isEraser
+        pts.clear()
+    elif pressedKey & 0xFF == ord('s'):
+        cv.imwrite("save.jpg", planeList)
 
 cv.destroyAllWindows()
 videoCapture.release()
