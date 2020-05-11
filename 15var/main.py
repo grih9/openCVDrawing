@@ -7,29 +7,29 @@ videoCapture = cv.VideoCapture(0)
 videoMe = cv.VideoCapture(1)
 planeList = cv.imread("123.jpg", 1)
 
-lower_red = np.array([0, 109, 20], dtype = "uint8")
-upper_red = np.array([15, 255, 255], dtype = "uint8")
+lowerRed = np.array([0, 109, 20], dtype="uint8")
+upperRed = np.array([15, 255, 255], dtype="uint8")
 
-lower_violet_red = np.array([165, 109, 20], dtype = "uint8")
-upper_violet_red = np.array([180, 255, 255], dtype = "uint8")
+lowerVioletRed = np.array([165, 109, 20], dtype="uint8")
+upperVioletRed = np.array([180, 255, 255], dtype="uint8")
 
-lower_yellow = np.array([20, 109, 20], dtype = "uint8")
-upper_yellow = np.array([40, 255, 255], dtype = "uint8")
+lowerYellow = np.array([20, 109, 20], dtype="uint8")
+upperYellow = np.array([40, 255, 255], dtype="uint8")
 
-lower_orange = np.array([12, 85, 110], dtype = "uint8")
-upper_orange = np.array([23, 255, 255], dtype = "uint8")
+lowerOrange = np.array([12, 85, 110], dtype="uint8")
+upperOrange = np.array([23, 255, 255], dtype="uint8")
 
-lower_violet = np.array([130, 50, 50], dtype = "uint8")
-upper_violet = np.array([160, 255, 255], dtype = "uint8")
+lowerViolet = np.array([130, 50, 50], dtype="uint8")
+upperViolet = np.array([160, 255, 255], dtype="uint8")
 
-lower_black = np.array([0, 0, 0], dtype = "uint8")
-upper_black = np.array([0, 255, 255], dtype = "uint8")
+lowerBlack = np.array([0, 0, 0], dtype="uint8")
+upperBlack = np.array([0, 255, 255], dtype="uint8")
 
-lower_blue = np.array([98, 109, 20], dtype = "uint8")
-upper_blue = np.array([112, 255, 255], dtype = "uint8")
+lowerBlue = np.array([98, 109, 20], dtype="uint8")
+upperBlue = np.array([112, 255, 255], dtype="uint8")
 
-lower_green = np.array([0, 50, 50], dtype = "uint8")
-upper_green = np.array([180, 255, 255], dtype = "uint8")
+lowerGreen = np.array([0, 50, 50], dtype="uint8")
+upperGreen = np.array([180, 255, 255], dtype="uint8")
 
 color = ""
 x = 0.0
@@ -38,36 +38,34 @@ area = 0
 isRealesed = False
 isEraser = False
 mask = None
-pts = deque(maxlen = 2)
+points = deque(maxlen=2)
 
 while videoCapture.isOpened():
     ret, frame = videoCapture.read()
     ret2, me = videoMe.read()
-    #frame = cv.flip(frame, 1)
 
     hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
-    red_tmp = cv.inRange(hsv, lower_red, upper_red)
-    violet_red = cv.inRange(hsv, lower_violet_red, upper_violet_red)
-    yellow = cv.inRange(hsv, lower_yellow, upper_yellow)
-    blue = cv.inRange(hsv, lower_blue, upper_blue)
-    green = cv.inRange(hsv, lower_green, upper_green)
-    red = red_tmp + violet_red
+    redTmp = cv.inRange(hsv, lowerRed, upperRed)
+    violetRed = cv.inRange(hsv, lowerVioletRed, upperVioletRed)
+    yellow = cv.inRange(hsv, lowerYellow, upperYellow)
+    blue = cv.inRange(hsv, lowerBlue, upperBlue)
+    red = redTmp + violetRed
 
     tmpColor = ""
     tmpMask = None
-    tmpx = 0.0
-    tmpy = 0.0
+    tmpX = 0.0
+    tmpY = 0.0
     maxArea = 0
 
     for k in range(1):
         moments = cv.moments(yellow, 1)
-        x_moment = moments['m10']
-        y_moment = moments['m01']
+        xMoment = moments['m10']
+        yMoment = moments['m01']
         tmpArea = moments['m00']
         if color == "yellow":
             if tmpArea > 750:
-                x = x_moment
-                y = y_moment
+                x = xMoment
+                y = yMoment
                 area = tmpArea
                 mask = yellow
                 break
@@ -79,17 +77,17 @@ while videoCapture.isOpened():
             tmpMask = yellow
             maxArea = tmpArea
             tmpColor = "yellow"
-            tmpx = x_moment
-            tmpy = y_moment
+            tmpX = xMoment
+            tmpY = yMoment
 
         moments = cv.moments(red, 1)
-        x_moment = moments['m10']
-        y_moment = moments['m01']
+        xMoment = moments['m10']
+        yMoment = moments['m01']
         tmpArea = moments['m00']
         if color == "red":
             if tmpArea > 750:
-                x = x_moment
-                y = y_moment
+                x = xMoment
+                y = yMoment
                 area = tmpArea
                 mask = red
                 break
@@ -101,17 +99,17 @@ while videoCapture.isOpened():
             tmpMask = red
             maxArea = tmpArea
             tmpColor = "red"
-            tmpx = x_moment
-            tmpy = y_moment
+            tmpX = xMoment
+            tmpY = yMoment
 
         moments = cv.moments(blue, 1)
-        x_moment = moments['m10']
-        y_moment = moments['m01']
+        xMoment = moments['m10']
+        yMoment = moments['m01']
         tmpArea = moments['m00']
         if color == "blue":
             if tmpArea > 750:
-                x = x_moment
-                y = y_moment
+                x = xMoment
+                y = yMoment
                 area = tmpArea
                 mask = blue
                 break
@@ -123,17 +121,17 @@ while videoCapture.isOpened():
             tmpMask = blue
             maxArea = tmpArea
             tmpColor = "blue"
-            tmpx = x_moment
-            tmpy = y_moment
+            tmpX = xMoment
+            tmpY = yMoment
 
     if color == "":
         color = tmpColor
         mask = tmpMask
         area = maxArea
-        x = tmpx
-        y = tmpy
+        x = tmpX
+        y = tmpY
 
-    if (area > 750) :
+    if area > 750:
         x = int(x / area)
         y = int(y / area)
         if isRealesed:
@@ -144,51 +142,52 @@ while videoCapture.isOpened():
         else:
             cv.putText(frame, color, (x, y), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
         centre = (x, y)
-        cnts = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
-        cnts = imutils.grab_contours(cnts)
-        c = max(cnts, key=cv.contourArea)
+        conturs = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+        conturs = imutils.grab_contours(conturs)
+        c = max(conturs, key=cv.contourArea)
         extTop = tuple(c[c[:, :, 1].argmin()][0])
         print("Centre : " + str(centre) + ", top point : " + str(extTop))
         cv.circle(frame, extTop, 4, [255, 0, 255], -1)
 
         if isRealesed:
-            pts.appendleft(extTop)
+            points.appendleft(extTop)
 
-            for i in range(1, len(pts)):
-                d = list(pts[i - 1])
-                tmp = list(pts[i])
+            for i in range(1, len(points)):
+                d = list(points[i - 1])
+                tmp = list(points[i])
                 dist = (tmp[0] - d[0]) * (tmp[0] - d[0]) + (tmp[1] - d[1]) * (tmp[1] - d[1])
                 print("Distanation : " + str(dist))
                 if dist > 4900:
-                    pts.popleft()
+                    points.popleft()
                     isRealesed = False
                     isEraser = False
-                    pts.clear()
+                    points.clear()
                     continue
 
                 colorDraw = (0, 0, 255)
                 thickness = 2
                 if isEraser:
-                    cv.circle(planeList, pts[i], 10, [255, 255, 255], -1)
+                    cv.circle(planeList, points[i], 10, [255, 255, 255], -1)
                 else:
                     if color == "yellow":
                         colorDraw = (0, 255, 255)
                     elif color == "blue":
                         colorDraw = (255, 0, 0)
-                    cv.line(planeList, pts[i - 1], pts[i], colorDraw, thickness = thickness)
+                    cv.line(planeList, points[i - 1], points[i], colorDraw, thickness=thickness)
 
-    blueScreen = cv.bitwise_and(frame, frame, mask = blue)
-    redScreen = cv.bitwise_and(frame, frame, mask = red)
-    yellowScreen = cv.bitwise_and(frame, frame, mask = yellow)
+    blueScreen = cv.bitwise_and(frame, frame, mask=blue)
+    redScreen = cv.bitwise_and(frame, frame, mask=red)
+    yellowScreen = cv.bitwise_and(frame, frame, mask=yellow)
     cv.imshow("frame", frame)
     yellowRed = np.hstack([yellowScreen, redScreen])
     cv.imshow('yellow and red', yellowRed)
     cv.imshow('blue', blueScreen)
     cv.imshow('draw', planeList)
-    #cv.imshow('me', me)
+    # cv.imshow('me', me)
 
     pressedKey = cv.waitKey(1)
     if pressedKey & 0xFF == ord('z'):
+        print("Exit")
         break
     elif pressedKey & 0xFF == ord('r'):
         if isEraser:
@@ -196,18 +195,22 @@ while videoCapture.isOpened():
         else:
             isRealesed = not isRealesed
         isEraser = False
-        pts.clear()
+        points.clear()
+        print("Release")
     elif pressedKey & 0xFF == ord('c'):
         isRealesed = False
         isEraser = False
         planeList = cv.imread("123.jpg", 1)
-        pts.clear()
+        points.clear()
+        print("Clear")
     elif pressedKey & 0xFF == ord('d'):
         isEraser = not isEraser
         isRealesed = isEraser
-        pts.clear()
+        points.clear()
+        print("Eraser")
     elif pressedKey & 0xFF == ord('s'):
         cv.imwrite("save.jpg", planeList)
+        print("Saved")
 
 cv.destroyAllWindows()
 videoCapture.release()
